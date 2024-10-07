@@ -18,13 +18,25 @@ from core.settings import WS_SERVER_PORT
 from propan import Context, apply_types, Depends
 from propan.annotations import ContextRepo
 from propan.brokers.rabbit import RabbitQueue
+from pydantic import BaseModel
+from enum import Enum
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
 
+class EventName(str, Enum):
+    NEW_CONNECTION = "new_connection"
+
+
+class OnConnectionMessage(BaseModel):
+    charge_point_id: str
+    name: str = EventName.NEW_CONNECTION
+
+
 async def on_connect(connection: WebSocketServerProtocol, path: str):
     charge_point_id = path.strip("/")
+    message = OnConnectionMessage(charge_point_id=charge_point_id)
     logger.info(
         f"New Charge Point Connected! (path={path}, charge_point_id={charge_point_id})")
 
@@ -35,11 +47,13 @@ async def on_connect(connection: WebSocketServerProtocol, path: str):
         while True:
             # Wait for a message from the client
             message = await connection.recv()
+            event = OnConnectionMessage(
+                charge_point_id=charge_point_id, value=1)
             logger.info(f"Received message from {charge_point_id}: {message}")
 
             # Here, you can process the message if needed
             # For example, publish the message to the event queue
-            await publish(message, to=EVENT_QUEUE_NAME)
+            await publish(event.model_dump_json(), to=EVENT_QUEUE_NAME)
             logging.info(f"Here is the EventQueueName:{EVENT_QUEUE_NAME}")
             # Optionally send a response back to the client
             await connection.send(f"Message received: {message}")
