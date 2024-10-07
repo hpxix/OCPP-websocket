@@ -1,0 +1,71 @@
+version: "3.2"
+
+services:
+
+  # Queue System
+  rabbitmq:
+    image: rabbitmq:3.12.0-management 
+    container_name: ashhan-rabitmq
+    volumes:
+      - ./src:/usr/src/csms
+    env_file:
+      - .env
+    ports:
+      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
+      - "${RABBIT_UI_PORT}:${RABBIT_UI_PORT}"
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBIT_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"  # Corrected variable name
+    healthcheck:
+      test: "exit 0"
+
+  # PostgreSQL Database 
+  db: 
+    image: postgres:15.3-bullseye
+    container_name: csms-db
+    volumes:
+      - ./data/postgres:/data
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRESQL_PORT}:${POSTGRESQL_PORT}"  # Ensure this matches the corrected variable name
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}" 
+      POSTGRES_DB: "${POSTGRES_DB}"
+      PGDATA: "/data"
+    healthcheck:
+      test: "exit 0"
+
+  # Management System 
+  manager: 
+    container_name: csms-manager
+    build: .
+    volumes:
+      - ./src:/usr/src/csms
+    env_file:
+      - .env
+    ports:
+      - "${HTTP_SERVER_PORT}:${HTTP_SERVER_PORT}"
+    restart: always
+    command: uvicorn manager.main:app --host 0.0.0.0 --port ${HTTP_SERVER_PORT} --reload
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+  # Charge Point Services
+  charge_point_node: 
+    container_name: charge_point_node
+    build: .
+    volumes:
+      - ./src:/usr/src/csms
+    ports:
+      - "${WS_SERVER_PORT}:${WS_SERVER_PORT}"
+    env_file:
+      - .env
+    command: watchmedo auto-restart --pattern "*.py" --recursive --signal SIGTERM python charge_point_node/main.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
