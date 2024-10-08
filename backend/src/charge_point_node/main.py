@@ -3,7 +3,7 @@
 # - asyncio: A standard Python library to write concurrent code using async/await.
 # - core.settings: A module (assumed to be in the user's project) that contains application configurations like WebSocket port.
 # - loguru.logger: A third-party library for sophisticated logging with improved syntax and options over the built-in logging library.
-
+from ssl import ssl_contex
 import websockets
 import asyncio
 from core import settings
@@ -29,7 +29,13 @@ class EventName(str, Enum):
     NEW_CONNECTION = "new_connection"
 
 
-class OnConnectionMessage(BaseModel):
+class BaseEvent(BaseModel):
+    name: EventName
+    queue: str = EVENT_QUEUE_NAME
+    priority: int = 10
+
+
+class OnConnectionMessage(BaseEvent):
     charge_point_id: str
     name: str = EventName.NEW_CONNECTION
 
@@ -53,7 +59,7 @@ async def on_connect(connection: WebSocketServerProtocol, path: str):
 
             # Here, you can process the message if needed
             # For example, publish the message to the event queue
-            await publish(event.model_dump_json(), to=EVENT_QUEUE_NAME)
+            await publish(event.model_dump_json(), to=event.queue)
             logging.info(f"Here is the EventQueueName:{EVENT_QUEUE_NAME}")
             # Optionally send a response back to the client
             await connection.send(f"Message received: {message}")
@@ -76,6 +82,7 @@ async def main():
         on_connect,
         '0.0.0.0',
         WS_SERVER_PORT,
+        ssl=ssl_contex
     )
     logger.info(f"WebSocket server started at ws://0.0.0.0:{WS_SERVER_PORT}")
     await server.wait_closed()
