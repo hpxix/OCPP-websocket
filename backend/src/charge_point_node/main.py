@@ -54,7 +54,7 @@ async def on_connect(connection: WebSocketServerProtocol, path: str):
             # Wait for a message from the client
             message = await connection.recv()
             event = OnConnectionMessage(
-                charge_point_id=charge_point_id, value=1)
+                charge_point_id=charge_point_id)
             logger.info(f"Received message from {charge_point_id}: {message}")
 
             # Here, you can process the message if needed
