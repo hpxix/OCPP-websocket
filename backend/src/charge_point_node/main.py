@@ -42,27 +42,28 @@ class OnConnectionMessage(BaseEvent):
 
 async def on_connect(connection: WebSocketServerProtocol, path: str):
     charge_point_id = path.strip("/")
-    message = OnConnectionMessage(charge_point_id=charge_point_id)
-    logger.info(
-        f"New Charge Point Connected! (path={path}, charge_point_id={charge_point_id})")
+    logger.info(f"New Charge Point Connected! (path={path}, charge_point_id={charge_point_id})")
 
     # Send a welcome message
     await connection.send("Welcome! You are now connected.")
 
     try:
         while True:
-            # Wait for a message from the client
             message = await connection.recv()
-            event = OnConnectionMessage(
-                charge_point_id=charge_point_id)
-            logger.info(f"Received message from {charge_point_id}: {message}")
+            logger.info(f"Raw message from {charge_point_id}: {message}")
 
-            # Here, you can process the message if needed
-            # For example, publish the message to the event queue
-            await publish(event.model_dump_json(), to=event.queue)
-            logging.info(f"Here is the EventQueueName:{EVENT_QUEUE_NAME}")
-            # Optionally send a response back to the client
-            await connection.send(f"Message received: {message}")
+            try:
+                event = OnConnectionMessage(charge_point_id=charge_point_id)  # Adjust constructor parameters as needed
+                logger.info(f"Received message from {charge_point_id}: {message}")
+
+                # Publish the message to the event queue
+                await publish(event.model_dump_json(), to=event.queue)
+                logger.info(f"Here is the EventQueueName: {EVENT_QUEUE_NAME}")
+
+                # Send a response back to the client
+                await connection.send(f"Message received: {message}")
+            except Exception as publish_error:
+                logger.error(f"Failed to process message: {publish_error}")
 
     except websockets.exceptions.ConnectionClosed:
         logger.info(f"Connection closed by the client: {charge_point_id}")
