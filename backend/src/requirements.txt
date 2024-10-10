@@ -1,4 +1,5 @@
 aio-pika==9.4.3
+aiokafka==0.11.0
 aiopg==1.4.0
 aiormq==6.8.1
 alembic==1.13.3
