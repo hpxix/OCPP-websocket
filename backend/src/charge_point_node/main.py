@@ -3,7 +3,7 @@
 # - asyncio: A standard Python library to write concurrent code using async/await.
 # - core.settings: A module (assumed to be in the user's project) that contains application configurations like WebSocket port.
 # - loguru.logger: A third-party library for sophisticated logging with improved syntax and options over the built-in logging library.
-from ssl import ssl_contex
+# from ssl import ssl_contex
 import websockets
 import asyncio
 from core import settings
@@ -82,7 +82,7 @@ async def main():
         on_connect,
         '0.0.0.0',
         WS_SERVER_PORT,
-        ssl=ssl_contex
+        # ssl=ssl_contex
     )
     logger.info(f"WebSocket server started at ws://0.0.0.0:{WS_SERVER_PORT}")
     await server.wait_closed()
