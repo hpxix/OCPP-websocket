@@ -17,7 +17,10 @@ services:
       RABBITMQ_DEFAULT_USER: "${RABBIT_USER}"
       RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"  
     healthcheck:
-      test: "exit 0"
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # PostgreSQL Database 
   db: 
