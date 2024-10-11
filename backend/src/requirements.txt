@@ -1,5 +1,4 @@
 aio-pika==9.4.3
-aiokafka==0.11.0
 aiopg==1.4.0
 aiormq==6.8.1
 alembic==1.13.3
@@ -29,3 +28,4 @@ loguru==0.7.2
 propan==0.1.5.26
 sse-starlette==2.1.3
 starlette==0.38.6
+aiokafka==0.11.0
