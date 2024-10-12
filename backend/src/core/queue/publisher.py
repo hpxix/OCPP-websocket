@@ -4,6 +4,7 @@
 import aio_pika
 
 # import get_connection and get_channel from core -> __init__.py
+from loguru import logger
 
 from core.queue import get_connection, get_channel
 
@@ -11,6 +12,7 @@ from core.queue import get_connection, get_channel
 
 
 async def publish(data: str, to: str) -> None:
+    logger.debug(f"Publishing data: {data} to queue: {to}")
     connection = await get_connection()
     channel = await get_channel(connection, to)
 
